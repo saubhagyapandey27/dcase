@@ -70,6 +70,8 @@ def train(
         callbacks=[checkpoint_callback],
         max_epochs=args['max_epochs'],
         precision=args['precision'],
+        gradient_clip_val=1.0,
+        gradient_clip_algorithm="norm",
         num_sanity_val_steps=0,
         fast_dev_run=False
     )
@@ -155,7 +157,7 @@ def get_args() -> dict:
     parser.add_argument('--max_epochs', type=int, default=20, help='Maximum number of epochs')
     parser.add_argument('--warmup_epochs', type=int, default=1, help='Number of warmup epochs')
     parser.add_argument('--rampdown_epochs', type=int, default=15, help='Number of ramp-down epochs')
-    parser.add_argument('--max_lr', type=float, default=2e-5, help='Maximum learning rate')
+    parser.add_argument('--max_lr', type=float, default=1e-5, help='Maximum learning rate')
     parser.add_argument('--min_lr', type=float, default=1e-7, help='Minimum learning rate')
 
     # Tau scheduling parameters (replaces old tau parameters)

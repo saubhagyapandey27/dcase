@@ -475,19 +475,20 @@ class AudioRetrievalModel(pl.LightningModule):
         self.on_validation_epoch_end(prefix='test')
 
     def configure_optimizers(self):
-        # Only optimize parameters that require gradients
         trainable_params = [p for p in self.parameters() if p.requires_grad]
         
-        print(f"Training {len(trainable_params)} parameter groups out of {len(list(self.parameters()))} total")
+        # Conditional epsilon based on precision
+        epsilon = 1e-8 if self.kwargs['precision'] in ['32', 'double'] else 1e-4
+        
+        print(f"Using precision: {self.kwargs['precision']}, epsilon: {epsilon}")
         
         optimizer = torch.optim.AdamW(
             trainable_params,
             betas=(0.9, 0.999),
-            eps=1e-8 if self.kwargs['precision'] in ['32', 'double'] else 1e-4,
+            eps=epsilon,  # ← Use the conditional epsilon
             weight_decay=1e-5,
             amsgrad=False
         )
-
         return optimizer
 
     def lr_scheduler_step(self, batch_idx):
