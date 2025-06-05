@@ -42,13 +42,13 @@ class BEATsWrapper(nn.Module):
         if x.shape[-1] != 160000:  # Expected length for 10s at 16kHz
             x = torchaudio.functional.resample(x, x.shape[-1]/10, 16000)
         
-        print(f"BEATs processing audio shape: {x.shape}")
+        # print(f"BEATs processing audio shape: {x.shape}")
         
         with torch.no_grad():
             try:
                 # Use preprocess and extract_features separately
                 fbank = self.model.preprocess(x)  # Convert to fbank features
-                print(f"Fbank shape: {fbank.shape}")
+                # print(f"Fbank shape: {fbank.shape}")
                 
                 # Extract features
                 fbank = fbank.unsqueeze(1)  # Add channel dim
@@ -65,7 +65,7 @@ class BEATsWrapper(nn.Module):
                 
                 # Pool to get final embedding
                 pooled = features.mean(dim=1)  # (batch, 768)
-                print(f"Final pooled shape: {pooled.shape}")
+                # print(f"Final pooled shape: {pooled.shape}")
                 
                 return pooled
                 

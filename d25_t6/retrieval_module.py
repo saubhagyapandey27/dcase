@@ -242,7 +242,7 @@ class AudioRetrievalModel(pl.LightningModule):
         """Compute soft contrastive loss using weighted positive samples"""
         
         # Apply tau scaling
-        C_scaled = C / self.current_tau
+        C_scaled = (C / self.current_tau).float()  # ← Force FP32
         
         # Compute log softmax
         C_audio = torch.log_softmax(C_scaled, dim=0)  # P(a|t)
@@ -255,7 +255,7 @@ class AudioRetrievalModel(pl.LightningModule):
             return torch.tensor(0.0, requires_grad=True, device=C.device)
         
         # Weighted positive loss
-        weights = soft_positive_matrix[positive_mask]
+        weights = soft_positive_matrix[positive_mask].float()  # ← Force FP32
         
         # Audio-to-text loss (weighted by soft positives)
         audio_positive_loss = (C_audio[positive_mask] * weights).sum() / weights.sum()
@@ -283,33 +283,33 @@ class AudioRetrievalModel(pl.LightningModule):
         return audio_embeddings, text_embeddings
 
     def forward_audio(self, batch):
-        print(f"Input audio shape: {batch['audio'].shape}")
-        print(f"Input durations: {batch['duration']}")
+        # print(f"Input audio shape: {batch['audio'].shape}")
+        # print(f"Input durations: {batch['duration']}")
         
         audio_input = batch['audio'].mean(1)
-        print(f"Audio input to model shape: {audio_input.shape}")
+        # print(f"Audio input to model shape: {audio_input.shape}")
         
         audio_embeddings = self.audio_embedding_model(audio_input)
-        print(f"Audio embeddings shape from model: {audio_embeddings.shape}")
+        # print(f"Audio embeddings shape from model: {audio_embeddings.shape}")
 
         # mask embeddings from padded empty audio parts
         aggregated = []
         for i, duration in enumerate(batch['duration']):
             if duration <= 10:
                 emb = audio_embeddings[i, 0]
-                print(f"Duration {duration:.2f}s, using first segment, shape: {emb.shape}")
+                # print(f"Duration {duration:.2f}s, using first segment, shape: {emb.shape}")
                 aggregated.append(emb)
             elif duration <= 20:
                 emb = audio_embeddings[i, :2].mean(-2)
-                print(f"Duration {duration:.2f}s, using first 2 segments, shape: {emb.shape}")
+                # print(f"Duration {duration:.2f}s, using first 2 segments, shape: {emb.shape}")
                 aggregated.append(emb)
             else:
                 emb = audio_embeddings[i].mean(-2)
-                print(f"Duration {duration:.2f}s, using all segments, shape: {emb.shape}")
+                # print(f"Duration {duration:.2f}s, using all segments, shape: {emb.shape}")
                 aggregated.append(emb)
 
         audio_embeddings = torch.stack(aggregated)
-        print(f"Stacked embeddings shape: {audio_embeddings.shape}")
+        # print(f"Stacked embeddings shape: {audio_embeddings.shape}")
         
         audio_embeddings = self.audio_projection(audio_embeddings)
         audio_embeddings = torch.nn.functional.normalize(audio_embeddings, p=2, dim=-1)
@@ -483,7 +483,7 @@ class AudioRetrievalModel(pl.LightningModule):
         optimizer = torch.optim.AdamW(
             trainable_params,
             betas=(0.9, 0.999),
-            eps=1e-8,
+            eps=1e-8 if self.kwargs['precision'] in ['32', 'double'] else 1e-4,
             weight_decay=1e-5,
             amsgrad=False
         )

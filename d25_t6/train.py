@@ -21,6 +21,7 @@ from d25_t6.datasets.batch_collate import CustomCollate
 
 from d25_t6.retrieval_module import AudioRetrievalModel
 
+torch.set_float32_matmul_precision('high')  # or 'medium'
 
 def train(
         model: AudioRetrievalModel,
@@ -172,18 +173,18 @@ def get_args() -> dict:
     # Soft labeling parameters
     parser.add_argument('--use_soft_labeling', default=True, action=argparse.BooleanOptionalAction,
                        help='Enable soft positive labeling based on caption similarities (default: True)')
-    parser.add_argument('--similarity_threshold_start', type=float, default=0.8,
-                       help='Initial similarity threshold for soft positives (default: 0.8)')
+    parser.add_argument('--similarity_threshold_start', type=float, default=0.85,
+                       help='Initial similarity threshold for soft positives (default: 0.85)')
     parser.add_argument('--similarity_threshold_end', type=float, default=0.65,
                        help='Final similarity threshold for soft positives (default: 0.65)')
     parser.add_argument('--soft_alpha', type=float, default=2.0,
                        help='Exponent for sharpening similarity scores (default: 2.0)')
-    parser.add_argument('--soft_weight_warmup_epochs', type=int, default=3,
-                       help='Epochs before introducing soft positives (default: 3)')
-    parser.add_argument('--soft_weight_transition_epochs', type=int, default=8,
-                       help='Epochs to reach full soft positive weight (default: 8)')
-    parser.add_argument('--soft_weight_final', type=float, default=0.7,
-                       help='Final weight for soft positives (default: 0.7)')
+    parser.add_argument('--soft_weight_warmup_epochs', type=int, default=5,
+                       help='Epochs before introducing soft positives (default: 5)')
+    parser.add_argument('--soft_weight_transition_epochs', type=int, default=15,
+                       help='Epochs to reach full soft positive weight (default: 15)')
+    parser.add_argument('--soft_weight_final', type=float, default=0.3,
+                       help='Final weight for soft positives (default: 0.3)')
 
     # RoBERTa parameters
     parser.add_argument('--roberta_base', default=False, action=argparse.BooleanOptionalAction,  help='Use Roberta base or large.')
